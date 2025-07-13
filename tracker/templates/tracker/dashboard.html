@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="space-y-12">
+    <!-- Page Header -->
+    <header class="text-center">
+        <h1 class="text-4xl sm:text-5xl font-bold text-[var(--text)] relative inline-block">
+            WealthWave Dashboard
+            <span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--primary)] to-[var(--income)] animate-pulse rounded-full"></span>
+        </h1>
+    </header>
+
+    <!-- Stats Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="card bg-gradient-to-br from-blue-900 to-blue-800 dark:from-blue-50 dark:to-blue-100 hover:scale-105 transition-all duration-300">
+            <h2 class="text-sm font-medium text-blue-400 dark:text-blue-600">Total Income</h2>
+            <p class="text-3xl font-bold mt-3 text-blue-200 dark:text-blue-800">${{ income|floatformat:2|default:"0.00" }}</p>
+        </div>
+        <div class="card bg-gradient-to-br from-red-900 to-red-800 dark:from-red-50 dark:to-red-100 hover:scale-105 transition-all duration-300">
+            <h2 class="text-sm font-medium text-red-400 dark:text-red-600">Total Expenses</h2>
+            <p class="text-3xl font-bold mt-3 text-red-200 dark:text-red-800">${{ expenses|floatformat:2|default:"0.00" }}</p>
+        </div>
+        <div class="card bg-gradient-to-br from-green-900 to-green-800 dark:from-green-50 dark:to-green-100 hover:scale-105 transition-all duration-300">
+            <h2 class="text-sm font-medium text-green-400 dark:text-green-600">Balance</h2>
+            <p class="text-3xl font-bold mt-3 text-green-200 dark:text-green-800">${{ balance|floatformat:2|default:"0.00" }}</p>
+        </div>
+    </section>
+
+    <!-- Filter & Search Bar -->
+    <section class="bg-gray-900 dark:bg-white rounded-xl p-6 shadow-md">
+        <form method="get" class="flex flex-col sm:flex-row justify-between items-center gap-6">
+            <div class="flex flex-col sm:flex-row flex-wrap gap-3 w-full sm:w-auto">
+                <span class="text-sm font-medium text-[var(--text)] self-center">Filter:</span>
+                <select name="filter" class="form-input w-full sm:w-40">
+                    <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All</option>
+                    <option value="income" {% if filter_type == 'income' %}selected{% endif %}>Income</option>
+                    <option value="expense" {% if filter_type == 'expense' %}selected{% endif %}>Expenses</option>
+                </select>
+                <input type="date" name="date" class="form-input w-full sm:w-40" value="{{ request.GET.date|default_if_none:'' }}">
+                <select name="category" class="form-input w-full sm:w-40">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'export_transactions_csv' %}" class="btn btn-secondary">Download CSV</a>
+                <a href="{% url 'add_transaction' %}" class="btn btn-primary">Add Transaction</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Transactions Table -->
+    <section class="card">
+        <h2 class="text-xl font-semibold mb-6 text-[var(--text)]">Recent Transactions</h2>
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr class="hover:bg-gray-700 dark:hover:bg-gray-50 transition-colors">
+                        <td>{{ transaction.category.name|default:"None" }}</td>
+                        <td class="{% if transaction.transaction_type == 'income' %}text-[var(--income)]{% else %}text-[var(--expense)]{% endif %}">
+                            ${{ transaction.amount|floatformat:2 }}
+                        </td>
+                        <td>{{ transaction.transaction_type|title }}</td>
+                        <td>{{ transaction.description|truncatewords:10 }}</td>
+                        <td>{{ transaction.date }}</td>
+                        <td class="space-x-3">
+                            <a href="{% url 'edit_transaction' transaction.id %}" class="btn btn-primary text-xs">Edit</a>
+                            <a href="{% url 'delete_transaction' transaction.id %}" class="btn btn-danger text-xs">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-6 text-gray-500 dark:text-gray-400">No transactions available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Analytics: Bar Chart -->
+    <section class="card">
+        <h2 class="text-xl font-semibold mb-6 text-[var(--text)]">Income vs. Expenses</h2>
+        <canvas id="budgetChart" class="max-w-full"></canvas>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-sm text-gray-500 dark:text-gray-400 py-6">
+        © 2025 WealthWave. All rights reserved.
+    </footer>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const income = parseFloat("{{ income|default_if_none:0|floatformat:'2' }}") || 0;
+        const expenses = parseFloat("{{ expenses|default_if_none:0|floatformat:'2' }}") || 0;
+
+        const ctx = document.getElementById('budgetChart');
+        if (ctx) {
+            new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Income', 'Expenses'],
+                    datasets: [{
+                        label: 'Amount ($)',
+                        data: [income, expenses],
+                        backgroundColor: ['#4CAF50', '#F44336'],
+                        borderColor: ['#388E3C', '#D32F2F'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    animation: { duration: 1000, easing: 'easeOutQuart' },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#E0E0E0', font: { size: 14 } },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#E0E0E0', font: { size: 14 } },
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1f2937',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 12 },
+                            padding: 10
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

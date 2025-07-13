@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <h1 class="text-2xl font-semibold mb-6">Sign Up</h1>
+    <div class="card">
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="id_username" class="form-label">Username</label>
+                {{ form.username }}
+            </div>
+            <div>
+                <label for="id_password1" class="form-label">Password</label>
+                {{ form.password1 }}
+            </div>
+            <div>
+                <label for="id_password2" class="form-label">Confirm Password</label>
+                {{ form.password2 }}
+            </div>
+            <div class="flex space-x-3">
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+                <a href="{% url 'login' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+    <p class="mt-4 text-center">Already have an account? <a href="{% url 'login' %}" class="text-blue-600 hover:underline">Login</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <h1 class="text-2xl font-semibold mb-6">{% if form.instance.id %}Edit Transaction{% else %}Add Transaction{% endif %}</h1>
+    <div class="card">
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="id_category" class="form-label">Category</label>
+                {{ form.category }}
+            </div>
+            <div>
+                <label for="id_amount" class="form-label">Amount</label>
+                {{ form.amount }}
+            </div>
+            <div>
+                <label for="id_transaction_type" class="form-label">Type</label>
+                {{ form.transaction_type }}
+            </div>
+            <div>
+                <label for="id_description" class="form-label">Description</label>
+                {{ form.description }}
+            </div>
+            <div class="flex space-x-3">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

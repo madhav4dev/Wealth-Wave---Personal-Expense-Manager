@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WealthWave</title>
+
+    <!-- Fixed Favicon (Inline SVG URI Encoded) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232196F3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 18c3-3.5 6-4 9-4s6 .5 9 4'/%3E%3Cpath d='M3 6c3 3.5 6 4 9 4s6-.5 9-4'/%3E%3C/svg%3E">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --background: #121212;
+            --text: #E0E0E0;
+            --primary: #2196F3;
+            --income: #4CAF50;
+            --expense: #F44336;
+            --alert: #FFEB3B;
+        }
+
+        [data-theme="light"] {
+            --background: #F5F5F5;
+            --text: #333333;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            font-family: sans-serif;
+        }
+    </style>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        });
+    </script>
+</head>
+<body>
+<nav class="bg-gray-900 dark:bg-white shadow-md border-b border-gray-700 dark:border-gray-200 sticky top-0 z-10">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <a href="{% url 'dashboard' %}" class="flex items-center space-x-2">
+            <!-- Logo Icon -->
+            <svg class="w-6 h-6 text-[var(--primary)]" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M3 18c3-3.5 6-4 9-4s6 .5 9 4"/>
+                <path d="M3 6c3 3.5 6 4 9 4s6-.5 9-4"/>
+            </svg>
+            <span class="text-2xl font-bold text-[var(--text)]">WealthWave</span>
+        </a>
+        <div class="flex items-center space-x-4">
+            {% if user.is_authenticated %}
+                <span class="text-sm font-medium text-[var(--text)]">Welcome, {{ user.username }}</span>
+                <button onclick="toggleTheme()"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-600 text-[var(--text)] hover:bg-gray-500 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                    Toggle Theme
+                </button>
+                <a href="{% url 'logout' %}"
+                   class="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-600 text-[var(--text)] hover:bg-gray-500 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                    Logout
+                </a>
+            {% else %}
+                <button onclick="toggleTheme()"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-600 text-[var(--text)] hover:bg-gray-500 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                    Toggle Theme
+                </button>
+                <a href="{% url 'login' %}"
+                   class="px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--primary)] text-white hover:bg-blue-600 dark:hover:bg-blue-500">
+                    Login
+                </a>
+                <a href="{% url 'signup' %}"
+                   class="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-600 text-[var(--text)] hover:bg-gray-500 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300">
+                    Sign Up
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container mx-auto px-4 py-12">
+    {% block content %}
+    {% endblock %}
+</div>
+
+</body>
+</html>
